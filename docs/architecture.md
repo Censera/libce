@@ -29,7 +29,7 @@ data
     buf str vec map set queue
 
 text
-    parse format hash sort
+    parse format utf8 hash sort
 
 filesystem
     path file stream dir
@@ -65,9 +65,15 @@ Containers store fixed-size values. Ce does not impose element destructors, owne
 
 `CeMap` uses caller-supplied hash and equality functions because arbitrary key types require a type-specific definition of identity. Storage remains contiguous and explicitly owned.
 
+## Text
+
+`CeStr` represents owned NUL-terminated bytes. `CeView` represents borrowed counted bytes. UTF-8 is handled explicitly through `ce/utf8.h`; ordinary byte strings are not silently treated as Unicode text.
+
 ## System boundaries
 
-Filesystem, process, environment, time, and platform APIs wrap the platform where necessary but preserve the same public naming and failure conventions. Platform-specific behavior stays inside implementation branches instead of spreading through public interfaces.
+Filesystem, process, environment, time, random, and platform APIs wrap the platform where necessary but preserve the same public naming and failure conventions. Platform-specific behavior stays inside implementation branches instead of spreading through public interfaces.
+
+`CeRandom` owns its deterministic generator state. No implicit global random source is created.
 
 ## Product boundary
 
