@@ -8,6 +8,7 @@ PREFIX ?= /usr/local
 BUILD = build
 LIB = $(BUILD)/libce.a
 TEST = $(BUILD)/test
+PC = $(BUILD)/libce.pc
 SRC = $(wildcard src/*.c)
 OBJ = $(SRC:src/%.c=$(BUILD)/%.o)
 SANITIZE ?=
@@ -36,6 +37,9 @@ test: $(TEST)
 $(TEST): tests/test.c $(LIB) | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $< $(LIB) -o $@
 
+$(PC): libce.pc.in | $(BUILD)
+	sed 's|@PREFIX@|$(PREFIX)|g' $< > $@
+
 check: format-check clean all test
 
 format:
@@ -44,10 +48,11 @@ format:
 format-check:
 	clang-format --dry-run --Werror $(SRC) $(wildcard include/ce/*.h) tests/test.c
 
-install: $(LIB)
-	install -d $(PREFIX)/include/ce $(PREFIX)/lib
+install: $(LIB) $(PC)
+	install -d $(PREFIX)/include/ce $(PREFIX)/lib $(PREFIX)/lib/pkgconfig
 	install -m 644 include/ce/*.h $(PREFIX)/include/ce/
 	install -m 644 $(LIB) $(PREFIX)/lib/libce.a
+	install -m 644 $(PC) $(PREFIX)/lib/pkgconfig/libce.pc
 
 clean:
 	rm -rf $(BUILD)
