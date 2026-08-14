@@ -24,5 +24,8 @@
 #include <ce/random.h>
 #include <ce/cli.h>
 #include <ce/log.h>
+#include <ce/diag.h>
+#include <ce/platform.h>
+#include <ce/process.h>
 
 #endif
