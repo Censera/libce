@@ -33,6 +33,8 @@ static void test_core(void)
     assert(ce_size_add(SIZE_MAX, 1, &value) == CE_OVERFLOW);
     assert(ce_size_add(1, 1, NULL) == CE_INVALID_ARGUMENT);
     assert(ce_size_mul(1, 1, NULL) == CE_INVALID_ARGUMENT);
+    assert(strcmp(ce_result_name(CE_OK), "ok") == 0);
+    assert(strcmp(ce_result_message(CE_OVERFLOW), "size overflow") == 0);
 }
 
 static void test_view(void)
@@ -269,6 +271,18 @@ static void test_directory(void)
     ce_dir_close(&dir);
 }
 
+static void test_platform_process(void)
+{
+    static const char *const argv[] = {"true", NULL};
+    CePlatform platform = ce_platform_current();
+    int status;
+
+    assert(platform != CE_PLATFORM_UNKNOWN);
+    assert(strcmp(ce_platform_name(platform), "unknown") != 0);
+    assert(ce_process_run("true", argv, &status) == CE_OK);
+    assert(status == 0);
+}
+
 int main(void)
 {
     test_core();
@@ -286,6 +300,7 @@ int main(void)
     test_cli();
     test_stream_and_file();
     test_directory();
+    test_platform_process();
     puts("ce: all tests passed");
     return 0;
 }
