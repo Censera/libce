@@ -1,9 +1,10 @@
+#include <stdio.h>
+
 #include <ce/terminal.h>
 
 #ifdef _WIN32
 #include <io.h>
 #else
-#include <stdio.h>
 #include <unistd.h>
 #endif
 
