@@ -17,6 +17,15 @@ static void test_core(void)
     assert(ce_size_mul(1, 1, NULL) == CE_INVALID_ARGUMENT);
 }
 
+static void test_view(void)
+{
+    static const unsigned char data[] = {1, 2, 3};
+    CeView view = {data, sizeof(data)};
+
+    assert(view.data == data);
+    assert(view.len == sizeof(data));
+}
+
 static void test_buffer(void)
 {
     CeBuf buf;
@@ -52,6 +61,33 @@ static void test_string(void)
     ce_str_free(&str);
 }
 
+static void test_vector(void)
+{
+    CeVec vec;
+    int value;
+    int output;
+
+    assert(ce_vec_init(&vec, sizeof(value)) == CE_OK);
+    assert(ce_vec_push(&vec, &(int){10}) == CE_OK);
+    assert(ce_vec_push(&vec, &(int){20}) == CE_OK);
+    assert(ce_vec_len(&vec) == 2);
+    assert(ce_vec_elem_size(&vec) == sizeof(value));
+
+    memcpy(&value, (const unsigned char *)ce_vec_const_data(&vec) + sizeof(value), sizeof(value));
+    assert(value == 20);
+
+    assert(ce_vec_pop(&vec, &output) == CE_OK);
+    assert(output == 20);
+    assert(ce_vec_len(&vec) == 1);
+    ce_vec_clear(&vec);
+    assert(ce_vec_len(&vec) == 0);
+    assert(ce_vec_pop(&vec, &output) == CE_INVALID_DATA);
+
+    ce_vec_free(&vec);
+    assert(ce_vec_init(NULL, sizeof(value)) == CE_INVALID_ARGUMENT);
+    assert(ce_vec_init(&vec, 0) == CE_INVALID_ARGUMENT);
+}
+
 static void test_file(void)
 {
     static const char path[] = "build/ce-test-file";
@@ -72,8 +108,10 @@ static void test_file(void)
 int main(void)
 {
     test_core();
+    test_view();
     test_buffer();
     test_string();
+    test_vector();
     test_file();
     puts("ce: all tests passed");
     return 0;
