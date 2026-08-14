@@ -2,7 +2,7 @@
 
 pkgs.stdenv.mkDerivation {
   pname = "libce";
-  version = "0.2.0";
+  version = "1.0.0";
 
   src = ../.;
 
@@ -18,7 +18,7 @@ pkgs.stdenv.mkDerivation {
   '';
 
   checkPhase = ''
-    make test
+    make check
   '';
 
   installPhase = ''
@@ -26,7 +26,7 @@ pkgs.stdenv.mkDerivation {
   '';
 
   meta = {
-    description = "Dependency-free C utility library built around explicit ownership and predictable failure";
+    description = "Extended C environment built around explicit ownership and predictable failure";
     homepage = "https://github.com/Censera/Ce";
     license = pkgs.lib.licenses.asl20;
     platforms = pkgs.lib.platforms.unix;
