@@ -36,7 +36,7 @@ test: $(TEST)
 $(TEST): tests/test.c $(LIB) | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $< $(LIB) -o $@
 
-check: clean all test
+check: format-check clean all test
 
 format:
 	clang-format -i $(SRC) $(wildcard include/ce/*.h) tests/test.c
