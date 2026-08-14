@@ -16,8 +16,10 @@ static CeResult ce_vec_grow(CeVec *vec, size_t needed)
 
     capacity = vec->cap == 0 ? 8 : vec->cap;
     while (capacity < needed) {
-        if (capacity > SIZE_MAX / 2)
-            return CE_OVERFLOW;
+        if (capacity > SIZE_MAX / 2) {
+            capacity = needed;
+            break;
+        }
         capacity *= 2;
     }
 
@@ -146,12 +148,12 @@ CeResult ce_vec_pop(CeVec *vec, void *value)
     return CE_OK;
 }
 
-void *ce_vec_data(CeVec *vec)
+unsigned char *ce_vec_data(CeVec *vec)
 {
     return vec == NULL ? NULL : vec->data;
 }
 
-const void *ce_vec_const_data(const CeVec *vec)
+const unsigned char *ce_vec_const_data(const CeVec *vec)
 {
     return vec == NULL ? NULL : vec->data;
 }
