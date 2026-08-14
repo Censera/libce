@@ -22,11 +22,13 @@ void ce_vec_clear(CeVec *vec);
 
 CeResult ce_vec_reserve(CeVec *vec, size_t capacity);
 CeResult ce_vec_resize(CeVec *vec, size_t len);
+
+/* value must not point into vec. */
 CeResult ce_vec_push(CeVec *vec, const void *value);
 CeResult ce_vec_pop(CeVec *vec, void *value);
 
-void *ce_vec_data(CeVec *vec);
-const void *ce_vec_const_data(const CeVec *vec);
+unsigned char *ce_vec_data(CeVec *vec);
+const unsigned char *ce_vec_const_data(const CeVec *vec);
 size_t ce_vec_len(const CeVec *vec);
 size_t ce_vec_capacity(const CeVec *vec);
 size_t ce_vec_elem_size(const CeVec *vec);
