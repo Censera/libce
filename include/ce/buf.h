@@ -20,6 +20,8 @@ void ce_buf_free(CeBuf *buf);
 void ce_buf_clear(CeBuf *buf);
 
 CeResult ce_buf_reserve(CeBuf *buf, size_t capacity);
+
+/* data must not point into buf. */
 CeResult ce_buf_append(CeBuf *buf, const void *data, size_t len);
 CeResult ce_buf_append_byte(CeBuf *buf, unsigned char byte);
 
