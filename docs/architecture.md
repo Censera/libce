@@ -1,6 +1,6 @@
 # Ce 1.0.0 Architecture
 
-Ce is an extended C environment. C remains the language and machine model. Ce supplies coherent facilities around that model without hiding ownership, allocation, control flow, or failure.
+Ce is an extended C environment. C remains the language and machine model. Ce supplies a coherent standard-like environment around it without hiding ownership, allocation, control flow, or failure.
 
 ## Rules
 
@@ -8,79 +8,69 @@ Every public facility follows the same model:
 
 - Public symbols use the `ce_` namespace.
 - Public types use the `Ce` prefix.
-- Owned data exposes an explicit release operation.
-- Borrowed data has a distinct view type and does not own storage.
+- Owned data has an explicit release operation.
+- Borrowed data uses an explicit view type and does not own storage.
 - Fallible operations return `CeResult`.
-- Length and capacity are separate values.
+- Length and capacity are distinct concepts.
 - Pointer and length travel together for byte ranges.
-- Allocation is visible in the contract and has a deterministic cleanup path.
-- Platform-specific code stays behind localized platform boundaries.
+- Allocation is visible in the contract and has deterministic cleanup.
+- Platform-specific implementation stays behind platform-specific boundaries.
 - Global mutable library state is not required.
-- There is no hidden runtime, exception system, framework machinery, or automatic initialization.
-- Higher-level facilities reuse lower-level ownership and error conventions instead of inventing competing models.
+- No hidden runtime, exceptions, framework machinery, or implicit initialization exists.
+- Simple structs and ordinary functions are preferred over elaborate object systems.
 
-## Layers
+## Public layers
 
 ```text
 core
-    result, checked arithmetic, allocation, borrowed views
+    core mem view
 
-containers
-    buffer, string, vector, map, set, queue
+data
+    buf str vec map set queue
 
 text
-    parsing, formatting, hashing, sorting
+    parse format hash sort
 
-io
-    files, streams, directories, paths
+filesystem
+    path file stream dir
 
 system
-    environment, time, deterministic random state
+    env time random platform process
 
 application
-    command-line handling, logging
+    cli log diag
 ```
 
-The layers describe dependency direction, not class hierarchy. A module may depend on lower layers but never needs a framework object or global context to reach them.
+The umbrella header `ce/ce.h` exposes these layers together. Individual headers remain independently includable.
 
 ## Ownership
 
-`CeView` is borrowed. `CeBuf`, `CeStr`, `CeVec`, `CeMap`, `CeSet`, `CeQueue`, and `CeFile` own their internal storage. Their `*_free` operation releases that storage and leaves the object empty.
+`CeView` is borrowed memory. `CeBuf`, `CeStr`, `CeVec`, `CeMap`, `CeSet`, `CeQueue`, and `CeFile` own their internal storage and provide explicit cleanup.
 
-Pointers returned from an owning object are borrowed and remain valid only until an operation that can reallocate or free that object's storage. APIs document aliasing restrictions when an operation may invalidate a borrowed pointer.
+Public functions must not retain borrowed memory beyond the operation unless the contract explicitly says so. Operations that can reallocate invalidate borrowed pointers into the affected storage.
 
 ## Failure
 
-Fallible operations return `CeResult`. They do not print, terminate the process, mutate global error state, or encode failure in ordinary data values.
+A failed operation is observable through its return value. `CE_OK` represents success. Other results identify invalid arguments, allocation failure, overflow, I/O failure, missing objects, existing objects, or invalid data.
 
-`CE_OK` represents success. Other result values distinguish invalid input, allocation failure, arithmetic overflow, I/O failure, missing objects, existing objects, and invalid data.
+Diagnostics are separate from failure itself. `ce_diag_print()` reports an existing result; it does not replace error handling.
+
+## Allocation
+
+Ce uses the ordinary C allocator. No global allocator is hidden behind the public API. `realloc`-style operations preserve the old pointer until allocation succeeds, and size arithmetic is checked before allocation sizes are computed.
 
 ## Containers
 
-Containers store bytes and fixed-size elements. They do not own arbitrary element graphs and therefore do not require hidden destructors, callbacks, or type registries.
+Containers store fixed-size values. Ce does not impose element destructors, ownership callbacks, iterator frameworks, or runtime type information. When a caller stores pointers, the caller owns the pointed-to objects unless an API contract explicitly states otherwise.
 
-`CeMap` and `CeSet` use caller-provided hash and equality functions because arbitrary key types require a runtime comparison rule. The storage remains contiguous and the dispatch surface is limited to those operations.
+`CeMap` uses caller-supplied hash and equality functions because arbitrary key types require a type-specific definition of identity. Storage remains contiguous and explicitly owned.
 
-## System boundary
+## System boundaries
 
-Filesystem, environment, time, and directory operations isolate platform differences in implementation files. The public API remains expressed in C types and Ce contracts.
-
-The library does not promise to abstract every operating-system facility. A platform feature enters the public API only when its ownership, failure, and portability contract can be stated clearly.
+Filesystem, process, environment, time, and platform APIs wrap the platform where necessary but preserve the same public naming and failure conventions. Platform-specific behavior stays inside implementation branches instead of spreading through public interfaces.
 
 ## Product boundary
 
-`ce/ce.h` exposes the complete 1.0.0 toolbox. Individual headers remain independently includable.
+The repository, installed files, examples, documentation, diagnostics, and API use the same terminology. Build products are generated under `build/`; installation places headers under `include/ce` and the static library under `lib`.
 
-The installation layout is:
-
-```text
-include/ce/*.h
-lib/libce.a
-lib/pkgconfig/libce.pc
-```
-
-Nix packaging is first-class through `flake.nix` and `nix/package.nix`.
-
-## Engineering gate
-
-A module is not complete merely because it compiles. Its representation, ownership model, failure behavior, tests, documentation, formatting, sanitizer behavior, and static-analysis behavior must satisfy the same engineering rules as the rest of Ce.
+The product should feel like one C environment, not a bag of unrelated utilities.
