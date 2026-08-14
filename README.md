@@ -6,41 +6,54 @@ The name comes from **C** and **Censera**.
 
 ## Status
 
-Ce is being built as a complete C11 utility layer. The public API is intentionally small. The library does not try to replace the C standard library or hide the language.
+Ce targets C11 and provides a compact utility layer for programs that want useful primitives without bringing in a framework or hiding C behind abstractions.
+
+The public API is namespaced with `ce_` because C has no namespaces. Public types use the `Ce` prefix. Internal implementation symbols remain private to their translation units.
 
 ## Design
 
 - C11.
 - No external dependencies.
-- No hidden allocation.
 - Explicit ownership and cleanup.
-- Explicit failure through `CeResult`.
+- Fallible operations return `CeResult`.
+- Checked size arithmetic for allocation and buffer growth.
 - No global mutable library state.
 - No exceptions, threads, callbacks, or framework machinery in the core.
-- Portable standard-C implementation where the platform permits it.
-- Performance comes from simple representations and predictable control flow.
+- Simple representations and predictable control flow.
+- Standard C interfaces where the platform permits them.
 
 ## Modules
 
-- `ce/core.h` - result codes and common status handling.
-- `ce/mem.h` - checked size arithmetic and memory operations.
-- `ce/buf.h` - owned growable byte buffer.
-- `ce/str.h` - owned growable NUL-terminated string.
-- `ce/file.h` - complete binary/text file loading and writing.
+- `ce/core.h` - common result codes and result names.
+- `ce/mem.h` - checked `size_t` arithmetic and memory allocation helpers.
+- `ce/buf.h` - owned growable byte buffers.
+- `ce/str.h` - owned growable NUL-terminated strings.
+- `ce/file.h` - binary file reading, writing, appending, and ownership cleanup.
 
-The umbrella header `ce/ce.h` includes the public API.
+`ce/ce.h` is the umbrella header for the complete public API.
 
 ## Build
 
 ```sh
 make
 make test
-make install PREFIX=/usr/local
 ```
 
-The library is built with warnings enabled and no external runtime dependency beyond the C standard library.
+Install system-wide under `/usr/local`:
 
-## Example
+```sh
+make install
+```
+
+Install elsewhere:
+
+```sh
+make install PREFIX=/usr
+```
+
+The build enables strict compiler warnings and treats them as errors.
+
+## Usage
 
 ```c
 #include <stdio.h>
@@ -48,30 +61,30 @@ The library is built with warnings enabled and no external runtime dependency be
 
 int main(void)
 {
-    CeStr name;
-    CeResult result = ce_str_init(&name, "Censera");
+    CeStr text;
+    CeResult result = ce_str_init(&text, "Censera");
 
     if (result != CE_OK) {
         fprintf(stderr, "ce_str_init: %s\n", ce_result_name(result));
         return 1;
     }
 
-    result = ce_str_append(&name, "'s Ce library");
+    result = ce_str_append(&text, "'s Ce library");
     if (result != CE_OK) {
         fprintf(stderr, "ce_str_append: %s\n", ce_result_name(result));
-        ce_str_free(&name);
+        ce_str_free(&text);
         return 1;
     }
 
-    puts(ce_str_data(&name));
-    ce_str_free(&name);
+    puts(ce_str_data(&text));
+    ce_str_free(&text);
     return 0;
 }
 ```
 
 ## Engineering standard
 
-Ce follows the project's C engineering rules: ownership is explicit, allocations are deliberate, interfaces are small, undefined behavior is treated as a bug, and the product itself is held to the same cleanliness standard as the source.
+Ce follows the project's C engineering rules. Ownership, lifetime, bounds, allocation, failure, interfaces, naming, and product behavior are treated as engineering concerns rather than cosmetic preferences.
 
 ## License
 
