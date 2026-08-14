@@ -8,6 +8,7 @@ PREFIX ?= /usr/local
 BUILD = build
 LIB = $(BUILD)/libce.a
 TEST = $(BUILD)/test
+EXAMPLE = $(BUILD)/hello
 PC = $(BUILD)/libce.pc
 SRC = $(wildcard src/*.c)
 OBJ = $(SRC:src/%.c=$(BUILD)/%.o)
@@ -18,7 +19,7 @@ CFLAGS += -fsanitize=$(SANITIZE) -fno-omit-frame-pointer
 LDFLAGS += -fsanitize=$(SANITIZE)
 endif
 
-.PHONY: all clean test check install format format-check
+.PHONY: all clean test check examples install format format-check
 
 all: $(LIB)
 
@@ -37,16 +38,21 @@ test: $(TEST)
 $(TEST): tests/test.c $(LIB) | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $< $(LIB) -o $@
 
+examples: $(EXAMPLE)
+
+$(EXAMPLE): examples/hello.c $(LIB) | $(BUILD)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $< $(LIB) -o $@
+
 $(PC): libce.pc.in | $(BUILD)
 	sed 's|@PREFIX@|$(PREFIX)|g' $< > $@
 
-check: format-check clean all test
+check: format-check clean all test examples
 
 format:
-	clang-format -i $(SRC) $(wildcard include/ce/*.h) tests/test.c
+	clang-format -i $(SRC) $(wildcard include/ce/*.h) tests/test.c examples/*.c
 
 format-check:
-	clang-format --dry-run --Werror $(SRC) $(wildcard include/ce/*.h) tests/test.c
+	clang-format --dry-run --Werror $(SRC) $(wildcard include/ce/*.h) tests/test.c examples/*.c
 
 install: $(LIB) $(PC)
 	install -d $(PREFIX)/include/ce $(PREFIX)/lib $(PREFIX)/lib/pkgconfig
