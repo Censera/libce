@@ -18,9 +18,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Install formatting tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y clang-format
+      - name: Format check
+        run: make format-check
       - name: Build
         run: make clean all
       - name: Test
         run: make test
       - name: Sanitizers
         run: make clean && make SANITIZE=address,undefined && make test
+      - name: Static analysis
+        if: matrix.cc == 'clang' && runner.os == 'Linux'
+        run: clang --analyze -std=c11 -Iinclude src/*.c
