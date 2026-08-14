@@ -15,5 +15,6 @@
 #include <ce/env.h>
 #include <ce/time.h>
 #include <ce/cli.h>
+#include <ce/map.h>
 
 #endif
