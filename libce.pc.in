@@ -1,0 +1,10 @@
+prefix=@PREFIX@
+exec_prefix=${prefix}
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: libce
+Description: Extended C environment
+Version: 1.0.0
+Libs: -L${libdir} -lce
+Cflags: -I${includedir}
