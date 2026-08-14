@@ -1,13 +1,14 @@
 #include <stdio.h>
-#include <stdlib.h>
 
 #include <ce/format.h>
+#include <ce/mem.h>
 
 CeResult ce_str_vformat(CeStr *out, const char *format, va_list args)
 {
     va_list copy;
     int needed;
     size_t length;
+    size_t capacity;
     CeResult result;
 
     if (out == NULL || format == NULL)
@@ -20,7 +21,11 @@ CeResult ce_str_vformat(CeStr *out, const char *format, va_list args)
         return CE_INVALID_DATA;
 
     length = (size_t)needed;
-    result = ce_str_reserve(out, length + 1);
+    result = ce_size_add(length, 1, &capacity);
+    if (result != CE_OK)
+        return result;
+
+    result = ce_str_reserve(out, capacity);
     if (result != CE_OK)
         return result;
 
