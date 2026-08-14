@@ -28,6 +28,7 @@
 #include <ce/diag.h>
 #include <ce/platform.h>
 #include <ce/process.h>
+#include <ce/terminal.h>
 #include <ce/utf8.h>
 
 #endif
