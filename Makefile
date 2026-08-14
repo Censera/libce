@@ -1,45 +1,32 @@
 CC = cc
-AR = ar
-CFLAGS = -std=c11 -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror -O2
+CFLAGS = -std=c11 -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Wstrict-prototypes -Werror
 CPPFLAGS = -Iinclude
-ARFLAGS = rcs
-PREFIX ?= /usr/local
 
-LIB = libce.a
+BUILD = build
+LIB = $(BUILD)/libce.a
+TEST = $(BUILD)/test_ce
 
-SRC = \
-    src/core.c \
-    src/mem.c \
-    src/buf.c \
-    src/str.c \
-    src/file.c
+SRC = src/ce.c
+OBJ = $(SRC:src/%.c=$(BUILD)/%.o)
 
-OBJ = $(SRC:src/%.c=build/%.o)
-
-.PHONY: all clean test install
+.PHONY: all clean test
 
 all: $(LIB)
 
-$(LIB): $(OBJ)
-	$(AR) $(ARFLAGS) $@ $^
+$(BUILD):
+	mkdir -p $@
 
-build/%.o: src/%.c | build
+$(BUILD)/%.o: src/%.c | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-build:
-	mkdir -p build
+$(LIB): $(OBJ)
+	ar rcs $@ $^
 
-build/test: tests/test.c $(LIB)
+test: $(TEST)
+	./$(TEST)
+
+$(TEST): tests/test_ce.c $(LIB) | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(LIB) -o $@
 
-test: build/test
-	./build/test
-
-install: $(LIB)
-	install -d $(DESTDIR)$(PREFIX)/include/ce
-	install -d $(DESTDIR)$(PREFIX)/lib
-	install -m 644 include/ce/*.h $(DESTDIR)$(PREFIX)/include/ce/
-	install -m 644 $(LIB) $(DESTDIR)$(PREFIX)/lib/
-
 clean:
-	rm -rf build $(LIB)
+	rm -rf $(BUILD)
