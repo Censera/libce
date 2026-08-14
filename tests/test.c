@@ -13,6 +13,8 @@ static void test_core(void)
     assert(ce_size_mul(10, 20, &value) == CE_OK);
     assert(value == 200);
     assert(ce_size_add((size_t)-1, 1, &value) == CE_OVERFLOW);
+    assert(ce_size_add(1, 1, NULL) == CE_INVALID_ARGUMENT);
+    assert(ce_size_mul(1, 1, NULL) == CE_INVALID_ARGUMENT);
 }
 
 static void test_buffer(void)
@@ -25,6 +27,9 @@ static void test_buffer(void)
     assert(ce_buf_append_byte(&buf, '!') == CE_OK);
     assert(ce_buf_len(&buf) == 6);
     assert(memcmp(ce_buf_const_data(&buf), "hello!", 6) == 0);
+    assert(ce_buf_append(NULL, text, 1) == CE_INVALID_ARGUMENT);
+    assert(ce_buf_append(&buf, NULL, 1) == CE_INVALID_ARGUMENT);
+    assert(ce_buf_append(&buf, NULL, 0) == CE_OK);
     ce_buf_clear(&buf);
     assert(ce_buf_len(&buf) == 0);
     ce_buf_free(&buf);
@@ -39,6 +44,8 @@ static void test_string(void)
     assert(ce_str_append_char(&str, '!') == CE_OK);
     assert(strcmp(ce_str_data(&str), "hello world!") == 0);
     assert(ce_str_len(&str) == strlen("hello world!"));
+    assert(ce_str_append(NULL, "x") == CE_INVALID_ARGUMENT);
+    assert(ce_str_append(&str, NULL) == CE_INVALID_ARGUMENT);
     ce_str_clear(&str);
     assert(strcmp(ce_str_data(&str), "") == 0);
     ce_str_free(&str);
@@ -58,6 +65,7 @@ static void test_file(void)
     assert(memcmp(file.data, "hello world", file.len) == 0);
     ce_file_free(&file);
     remove(path);
+    assert(ce_file_read("build/no-such-file", &file) == CE_NOT_FOUND);
 }
 
 int main(void)
