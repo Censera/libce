@@ -40,6 +40,7 @@ Text and binary data:
 
 - `ce/parse.h`
 - `ce/format.h`
+- `ce/utf8.h`
 - `ce/hash.h`
 - `ce/sort.h`
 
@@ -55,11 +56,11 @@ System and application support:
 - `ce/env.h`
 - `ce/time.h`
 - `ce/random.h`
+- `ce/platform.h`
+- `ce/process.h`
 - `ce/cli.h`
 - `ce/log.h`
 - `ce/diag.h`
-- `ce/platform.h`
-- `ce/process.h`
 
 `ce/ce.h` is the umbrella header. Every module remains independently includable.
 
