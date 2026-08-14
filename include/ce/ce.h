@@ -11,9 +11,9 @@
 #include <ce/map.h>
 #include <ce/set.h>
 #include <ce/queue.h>
+#include <ce/deque.h>
 #include <ce/parse.h>
 #include <ce/format.h>
-#include <ce/utf8.h>
 #include <ce/hash.h>
 #include <ce/sort.h>
 #include <ce/path.h>
@@ -28,5 +28,6 @@
 #include <ce/diag.h>
 #include <ce/platform.h>
 #include <ce/process.h>
+#include <ce/utf8.h>
 
 #endif
