@@ -1,13 +1,12 @@
 #include <string.h>
 
-#include <ce/mem.h>
 #include <ce/deque.h>
+#include <ce/mem.h>
 
 static CeResult ce_deque_reserve(CeDeque *deque, size_t capacity)
 {
     size_t bytes;
     size_t old_bytes;
-    size_t tail;
     unsigned char *data;
     CeResult result;
 
@@ -29,22 +28,33 @@ static CeResult ce_deque_reserve(CeDeque *deque, size_t capacity)
     }
 
     if (deque->len != 0) {
-        if (deque->head + deque->len <= deque->cap) {
+        size_t first = (deque->cap - deque->head) * deque->elem_size;
+
+        if (first >= old_bytes) {
             memcpy(data, deque->data + deque->head * deque->elem_size, old_bytes);
         } else {
-            size_t first = (deque->cap - deque->head) * deque->elem_size;
             memcpy(data, deque->data + deque->head * deque->elem_size, first);
             memcpy(data + first, deque->data, old_bytes - first);
         }
     }
 
-    tail = deque->len;
-    (void)tail;
     ce_mem_free(deque->data);
     deque->data = data;
     deque->cap = capacity;
     deque->head = 0;
     return CE_OK;
+}
+
+static CeResult ce_deque_grow(CeDeque *deque)
+{
+    size_t capacity = deque->cap == 0 ? 8 : deque->cap;
+
+    if (deque->cap == 0)
+        return ce_deque_reserve(deque, capacity);
+    if (capacity > SIZE_MAX / 2)
+        return CE_OVERFLOW;
+
+    return ce_deque_reserve(deque, capacity * 2);
 }
 
 CeResult ce_deque_init(CeDeque *deque, size_t elem_size)
@@ -75,16 +85,6 @@ void ce_deque_clear(CeDeque *deque)
     deque->head = 0;
 }
 
-static CeResult ce_deque_grow(CeDeque *deque)
-{
-    size_t capacity = deque->cap == 0 ? 8 : deque->cap;
-
-    if (capacity > SIZE_MAX / 2)
-        return CE_OVERFLOW;
-
-    return ce_deque_reserve(deque, capacity * 2);
-}
-
 CeResult ce_deque_push_back(CeDeque *deque, const void *value)
 {
     size_t needed;
@@ -103,7 +103,8 @@ CeResult ce_deque_push_back(CeDeque *deque, const void *value)
             return result;
     }
 
-    index = (deque->head + deque->len) % deque->cap;
+    index = deque->len < deque->cap - deque->head ? deque->head + deque->len
+                                                   : deque->len - (deque->cap - deque->head);
     memcpy(deque->data + index * deque->elem_size, value, deque->elem_size);
     deque->len = needed;
     return CE_OK;
@@ -158,7 +159,9 @@ CeResult ce_deque_pop_back(CeDeque *deque, void *value)
     if (deque->len == 0)
         return CE_INVALID_DATA;
 
-    index = (deque->head + deque->len - 1) % deque->cap;
+    index = deque->len - 1;
+    index = index < deque->cap - deque->head ? deque->head + index
+                                              : index - (deque->cap - deque->head);
     memcpy(value, deque->data + index * deque->elem_size, deque->elem_size);
     deque->len -= 1;
     if (deque->len == 0)
