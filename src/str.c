@@ -12,11 +12,11 @@ static CeResult ce_str_grow(CeStr *str, size_t needed)
 
     capacity = str->cap == 0 ? 32 : str->cap;
     while (capacity < needed) {
-        size_t next;
-        CeResult result = ce_size_mul(capacity, 2, &next);
-        if (result != CE_OK)
-            return result;
-        capacity = next;
+        if (capacity > SIZE_MAX / 2) {
+            capacity = needed;
+            break;
+        }
+        capacity *= 2;
     }
 
     return ce_str_reserve(str, capacity);
@@ -24,8 +24,8 @@ static CeResult ce_str_grow(CeStr *str, size_t needed)
 
 CeResult ce_str_init(CeStr *str, const char *initial)
 {
-    if (initial == NULL)
-        return ce_str_init_len(str, "", 0);
+    if (str == NULL || initial == NULL)
+        return CE_INVALID_ARGUMENT;
     return ce_str_init_len(str, initial, strlen(initial));
 }
 
