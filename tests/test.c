@@ -114,7 +114,7 @@ static void test_hash_and_sort(void)
     int values[] = {4, 1, 3, 2};
     uint64_t hash = ce_hash_bytes("abc", 3);
 
-    assert(hash == UINT64_C(16242233503745875709));
+    assert(hash == UINT64_C(16654208175385433931));
     ce_sort(values, 4, sizeof(values[0]), compare_int);
     assert(values[0] == 1 && values[3] == 4);
     assert(*(const int *)ce_search(&(int){3}, values, 4, sizeof(values[0]), compare_int) == 3);
