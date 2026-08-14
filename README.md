@@ -2,15 +2,15 @@
 
 Ce is an extended C environment built around explicit ownership, predictable failure, simple data structures, direct control flow, and one coherent vocabulary.
 
-The name comes from **C** and **Censera** :p
+The name comes from **C** and **Censera**.
 
 ## Status
 
-Ce targets C11. Version 0.9.0 is the architectural foundation for a larger extended-C environment. The goal is not feature count. The goal is to provide the facilities C programmers repeatedly need without turning C into a framework or hiding the machine model.
+Ce 1.0.0 is the first complete release of the extended-C core. C remains the language and machine model. Ce supplies the facilities that belong around that model without introducing a framework, hidden runtime, exceptions, or implicit ownership.
 
 ## Design
 
-- C remains the language and machine model.
+- C11 remains the language and ABI foundation.
 - Public symbols use the `ce_` namespace.
 - Public types use the `Ce` prefix.
 - Owned and borrowed data are explicitly distinguished.
@@ -18,28 +18,47 @@ Ce targets C11. Version 0.9.0 is the architectural foundation for a larger exten
 - Length and capacity remain separate concepts.
 - Allocation and cleanup are deterministic.
 - No global mutable library state is required.
-- No hidden runtime, exceptions, framework machinery, or automatic initialization.
 - Simple structs, ordinary functions, and visible control flow are preferred.
-- Platform-specific details stay behind platform-specific implementation boundaries.
+- Platform-specific code stays behind platform-specific implementation boundaries.
 - Every module follows the same engineering rules.
 
 ## Modules
 
-Foundation:
+Core data and memory:
 
-- `ce/core.h` - common result codes and result names.
-- `ce/mem.h` - checked `size_t` arithmetic and memory allocation helpers.
-- `ce/view.h` - borrowed byte ranges.
-- `ce/buf.h` - owned growable byte buffers.
-- `ce/str.h` - owned growable NUL-terminated strings.
-- `ce/vec.h` - owned growable storage for fixed-size elements.
-- `ce/file.h` - binary file reading, writing, appending, and ownership cleanup.
+- `ce/core.h`
+- `ce/mem.h`
+- `ce/view.h`
+- `ce/buf.h`
+- `ce/str.h`
+- `ce/vec.h`
+- `ce/map.h`
+- `ce/set.h`
+- `ce/queue.h`
 
-Planned higher layers include containers, text, I/O, filesystem, system facilities, hashing, randomness, sorting, command-line handling, logging, and diagnostics. A facility is added only when its representation and contract are understood well enough to follow the same rules as the foundation.
+Text and binary data:
 
-`ce/ce.h` is the umbrella header for the normal Ce toolbox. Individual headers remain independently includable.
+- `ce/parse.h`
+- `ce/format.h`
+- `ce/hash.h`
+- `ce/sort.h`
 
-See `docs/architecture.md` for the architectural model.
+Filesystem and I/O:
+
+- `ce/path.h`
+- `ce/file.h`
+- `ce/stream.h`
+- `ce/dir.h`
+
+System and application support:
+
+- `ce/env.h`
+- `ce/time.h`
+- `ce/random.h`
+- `ce/cli.h`
+- `ce/log.h`
+
+`ce/ce.h` is the umbrella header. Every module remains independently includable.
 
 ## Build
 
@@ -49,7 +68,7 @@ make test
 make check
 ```
 
-Install system-wide under `/usr/local`:
+Install under `/usr/local`:
 
 ```sh
 make install
@@ -61,7 +80,13 @@ Install elsewhere:
 make install PREFIX=/usr
 ```
 
-The build enables strict compiler warnings and treats them as errors. CI also runs formatting, tests, sanitizers, and static analysis.
+Nix users can build the package directly:
+
+```sh
+nix build .#libce
+```
+
+The build uses strict warnings as errors. CI enforces formatting, tests, sanitizers, and static analysis.
 
 ## Usage
 
@@ -79,9 +104,9 @@ int main(void)
         return 1;
     }
 
-    result = ce_str_append(&text, "'s Ce library");
+    result = ce_str_append_format(&text, "'s Ce library: %d", 1);
     if (result != CE_OK) {
-        fprintf(stderr, "ce_str_append: %s\n", ce_result_name(result));
+        fprintf(stderr, "ce_str_append_format: %s\n", ce_result_name(result));
         ce_str_free(&text);
         return 1;
     }
@@ -94,7 +119,7 @@ int main(void)
 
 ## Engineering standard
 
-Ce follows the project's C engineering rules. Ownership, lifetime, bounds, allocation, failure, interfaces, naming, and product behavior are treated as engineering concerns rather than cosmetic preferences.
+Ce follows `C_rules.md`: ownership, lifetime, bounds, allocation, failure, interfaces, naming, build structure, documentation, and product behavior are treated as engineering constraints rather than decoration.
 
 ## License
 
