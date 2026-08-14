@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include <ce/env.h>
 
@@ -50,10 +51,7 @@ CeResult ce_env_set(CeView name, CeView value, int overwrite)
 
 #ifdef _WIN32
     (void)overwrite;
-    if (_putenv_s(key.data, val.data) != 0)
-        result = CE_IO_ERROR;
-    else
-        result = CE_OK;
+    result = _putenv_s(key.data, val.data) == 0 ? CE_OK : CE_IO_ERROR;
 #else
     result = setenv(key.data, val.data, overwrite != 0) == 0 ? CE_OK : CE_IO_ERROR;
 #endif
