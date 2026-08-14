@@ -21,6 +21,8 @@ void ce_str_free(CeStr *str);
 void ce_str_clear(CeStr *str);
 
 CeResult ce_str_reserve(CeStr *str, size_t capacity);
+
+/* data must not point into str. */
 CeResult ce_str_append(CeStr *str, const char *text);
 CeResult ce_str_append_len(CeStr *str, const char *data, size_t len);
 CeResult ce_str_append_char(CeStr *str, char c);
