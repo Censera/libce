@@ -145,10 +145,12 @@ static void test_queue(void)
     ce_queue_free(&queue);
 }
 
-static void test_parse_format(void)
+static void test_parse_format_utf8(void)
 {
     uint64_t unsigned_value;
     int64_t signed_value;
+    uint32_t codepoint;
+    size_t offset = 0;
     CeStr str;
 
     assert(ce_parse_u64(ce_view_make("ff", 2), &unsigned_value, 16) == CE_OK);
@@ -163,6 +165,13 @@ static void test_parse_format(void)
     assert(ce_str_append_format(&str, ", hex=%x", 255) == CE_OK);
     assert(strcmp(ce_str_data(&str), "value=42, hex=ff") == 0);
     ce_str_free(&str);
+
+    assert(ce_utf8_validate(ce_view_make("hello", 5)) == CE_OK);
+    assert(ce_utf8_validate(ce_view_make("\xF0\x9F\x98\x80", 4)) == CE_OK);
+    assert(ce_utf8_next(ce_view_make("\xF0\x9F\x98\x80", 4), &offset, &codepoint) == CE_OK);
+    assert(codepoint == 0x1F600u);
+    assert(offset == 4);
+    assert(ce_utf8_width(0x1F600u) == 4);
 }
 
 static void test_hash_sort(void)
@@ -303,7 +312,7 @@ int main(void)
     test_vector();
     test_map_set();
     test_queue();
-    test_parse_format();
+    test_parse_format_utf8();
     test_hash_sort();
     test_path();
     test_environment();
