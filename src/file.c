@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 
 #include <ce/file.h>
@@ -20,15 +21,12 @@ static CeResult ce_file_read_stream(FILE *file, CeFile *out)
 
             if (cap == 0) {
                 next = 4096;
-            } else if (cap > SIZE_MAX / 2) {
-                next = cap;
             } else {
+                if (cap > SIZE_MAX / 2) {
+                    ce_mem_free(data);
+                    return CE_OVERFLOW;
+                }
                 next = cap * 2;
-            }
-
-            if (next <= cap) {
-                ce_mem_free(data);
-                return CE_OVERFLOW;
             }
 
             next_data = ce_mem_realloc(data, next);
