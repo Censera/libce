@@ -5,7 +5,8 @@ UseTab: Never
 ColumnLimit: 100
 BreakBeforeBraces: Linux
 AllowShortFunctionsOnASingleLine: Empty
-AllowShortIfStatementsOnASingleLine: Never
+AllowShortIfStatementsOnASingleLine: Always
+AllowShortLoopsOnASingleLine: Always
 AllowShortCaseLabelsOnASingleLine: true
 PointerAlignment: Right
 SortIncludes: Never
