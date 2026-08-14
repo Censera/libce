@@ -39,6 +39,7 @@ static void test_string(void)
 {
     CeStr str;
 
+    assert(ce_str_init(&str, NULL) == CE_INVALID_ARGUMENT);
     assert(ce_str_init(&str, "hello") == CE_OK);
     assert(ce_str_append(&str, " world") == CE_OK);
     assert(ce_str_append_char(&str, '!') == CE_OK);
