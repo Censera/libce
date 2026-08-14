@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdio.h>
 
 #include <ce/file.h>
@@ -19,12 +20,15 @@ static CeResult ce_file_read_stream(FILE *file, CeFile *out)
 
             if (cap == 0) {
                 next = 4096;
+            } else if (cap > SIZE_MAX / 2) {
+                next = cap;
             } else {
-                CeResult result = ce_size_mul(cap, 2, &next);
-                if (result != CE_OK) {
-                    ce_mem_free(data);
-                    return result;
-                }
+                next = cap * 2;
+            }
+
+            if (next <= cap) {
+                ce_mem_free(data);
+                return CE_OVERFLOW;
             }
 
             next_data = ce_mem_realloc(data, next);
@@ -52,10 +56,6 @@ static CeResult ce_file_read_stream(FILE *file, CeFile *out)
     if (len == 0) {
         ce_mem_free(data);
         data = NULL;
-    } else {
-        unsigned char *shrunk = ce_mem_realloc(data, len);
-        if (shrunk != NULL)
-            data = shrunk;
     }
 
     out->data = data;
@@ -76,10 +76,13 @@ CeResult ce_file_read(const char *path, CeFile *out)
 
     file = fopen(path, "rb");
     if (file == NULL)
-        return CE_NOT_FOUND;
+        return errno == ENOENT ? CE_NOT_FOUND : CE_IO_ERROR;
 
     result = ce_file_read_stream(file, out);
-    fclose(file);
+    if (fclose(file) != 0 && result == CE_OK) {
+        ce_file_free(out);
+        return CE_IO_ERROR;
+    }
     return result;
 }
 
