@@ -35,6 +35,7 @@ Core data and memory:
 - `ce/map.h`
 - `ce/set.h`
 - `ce/queue.h`
+- `ce/deque.h`
 
 Text and binary data:
 
@@ -56,9 +57,10 @@ System and application support:
 - `ce/env.h`
 - `ce/time.h`
 - `ce/random.h`
+- `ce/cli.h`
+- `ce/terminal.h`
 - `ce/platform.h`
 - `ce/process.h`
-- `ce/cli.h`
 - `ce/log.h`
 - `ce/diag.h`
 
@@ -90,33 +92,27 @@ Nix users can build the package directly:
 nix build .#libce
 ```
 
-The build uses strict warnings as errors. CI enforces formatting, tests, sanitizers, and static analysis when GitHub Actions is available.
+The build uses strict warnings as errors. `make check` also formats the source set, builds the library, runs the test suite, and compiles the public example. CI additionally enforces sanitizers and static analysis when the runner is available.
 
 ## Usage
 
 ```c
 #include <stdio.h>
+
 #include <ce/ce.h>
 
 int main(void)
 {
-    CeStr text;
-    CeResult result = ce_str_init(&text, "Censera");
+    CeStr message;
+    CeResult result = ce_str_format(&message, "Ce %s", CE_VERSION_STRING);
 
     if (result != CE_OK) {
-        fprintf(stderr, "ce_str_init: %s\n", ce_result_name(result));
+        fprintf(stderr, "ce_str_format: %s\n", ce_result_name(result));
         return 1;
     }
 
-    result = ce_str_append_format(&text, "'s Ce library: %d", 1);
-    if (result != CE_OK) {
-        fprintf(stderr, "ce_str_append_format: %s\n", ce_result_name(result));
-        ce_str_free(&text);
-        return 1;
-    }
-
-    puts(ce_str_data(&text));
-    ce_str_free(&text);
+    puts(ce_str_data(&message));
+    ce_str_free(&message);
     return 0;
 }
 ```
