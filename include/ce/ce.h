@@ -13,6 +13,7 @@
 #include <ce/queue.h>
 #include <ce/parse.h>
 #include <ce/format.h>
+#include <ce/utf8.h>
 #include <ce/hash.h>
 #include <ce/sort.h>
 #include <ce/path.h>
