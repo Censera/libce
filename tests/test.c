@@ -241,7 +241,7 @@ static void test_time_random(void)
     assert(ce_random_next(&random_a) == ce_random_next(&random_b));
 }
 
-static void test_cli(void)
+static void test_cli_terminal(void)
 {
     static const char *const argv[] = {"demo", "--name", "ce", "--verbose"};
     CeCli cli;
@@ -252,6 +252,9 @@ static void test_cli(void)
     assert(ce_cli_value(&cli, ce_view_make("--name", 6), &value) == CE_OK);
     assert(value.len == 2 && memcmp(value.data, "ce", 2) == 0);
     assert(ce_cli_value(&cli, ce_view_make("--missing", 9), &value) == CE_NOT_FOUND);
+    assert(ce_terminal_is_tty_stdin() == 0 || ce_terminal_is_tty_stdin() == 1);
+    assert(ce_terminal_is_tty_stdout() == 0 || ce_terminal_is_tty_stdout() == 1);
+    assert(ce_terminal_is_tty_stderr() == 0 || ce_terminal_is_tty_stderr() == 1);
 }
 
 static void test_stream_and_file(void)
@@ -331,7 +334,7 @@ int main(void)
     test_path();
     test_environment();
     test_time_random();
-    test_cli();
+    test_cli_terminal();
     test_stream_and_file();
     test_directory();
     test_platform_process();
