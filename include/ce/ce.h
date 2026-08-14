@@ -1,6 +1,7 @@
 #ifndef CE_H
 #define CE_H
 
+#include <ce/version.h>
 #include <ce/core.h>
 #include <ce/mem.h>
 #include <ce/view.h>
