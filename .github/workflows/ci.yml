@@ -5,6 +5,18 @@ on:
   pull_request:
 
 jobs:
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install formatting tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format
+      - name: Format check
+        run: make format-check
+
   build:
     strategy:
       matrix:
@@ -18,16 +30,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Install formatting tools
-        run: |
-          if [ "${RUNNER_OS}" = "Linux" ]; then
-            sudo apt-get update
-            sudo apt-get install -y clang-format
-          else
-            brew install clang-format
-          fi
-      - name: Format check
-        run: make format-check
       - name: Build
         run: make clean all
       - name: Test
