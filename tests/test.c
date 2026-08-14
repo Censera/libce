@@ -273,13 +273,24 @@ static void test_directory(void)
 
 static void test_platform_process(void)
 {
-    static const char *const argv[] = {"true", NULL};
     CePlatform platform = ce_platform_current();
     int status;
 
     assert(platform != CE_PLATFORM_UNKNOWN);
     assert(strcmp(ce_platform_name(platform), "unknown") != 0);
-    assert(ce_process_run("true", argv, &status) == CE_OK);
+
+#ifdef _WIN32
+    {
+        static const char *const argv[] = {"cmd", "/c", "exit", "0", NULL};
+        assert(ce_process_run("cmd", argv, &status) == CE_OK);
+    }
+#else
+    {
+        static const char *const argv[] = {"true", NULL};
+        assert(ce_process_run("true", argv, &status) == CE_OK);
+    }
+#endif
+
     assert(status == 0);
 }
 
