@@ -57,6 +57,9 @@ System and application support:
 - `ce/random.h`
 - `ce/cli.h`
 - `ce/log.h`
+- `ce/diag.h`
+- `ce/platform.h`
+- `ce/process.h`
 
 `ce/ce.h` is the umbrella header. Every module remains independently includable.
 
@@ -86,7 +89,7 @@ Nix users can build the package directly:
 nix build .#libce
 ```
 
-The build uses strict warnings as errors. CI enforces formatting, tests, sanitizers, and static analysis.
+The build uses strict warnings as errors. CI enforces formatting, tests, sanitizers, and static analysis when GitHub Actions is available.
 
 ## Usage
 
