@@ -12,11 +12,11 @@ static CeResult ce_buf_grow(CeBuf *buf, size_t needed)
 
     capacity = buf->cap == 0 ? 64 : buf->cap;
     while (capacity < needed) {
-        size_t next;
-        CeResult result = ce_size_mul(capacity, 2, &next);
-        if (result != CE_OK)
-            return result;
-        capacity = next;
+        if (capacity > SIZE_MAX / 2) {
+            capacity = needed;
+            break;
+        }
+        capacity *= 2;
     }
 
     return ce_buf_reserve(buf, capacity);
