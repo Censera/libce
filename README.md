@@ -22,7 +22,7 @@ Ce is being built as a complete C11 utility layer. The public API is intentional
 
 ## Modules
 
-- `ce/core.h` - result codes, sizes, and common status handling.
+- `ce/core.h` - result codes and common status handling.
 - `ce/mem.h` - checked size arithmetic and memory operations.
 - `ce/buf.h` - owned growable byte buffer.
 - `ce/str.h` - owned growable NUL-terminated string.
@@ -75,4 +75,4 @@ Ce follows the project's C engineering rules: ownership is explicit, allocations
 
 ## License
 
-MIT. See `LICENSE`.
+Apache License 2.0. See `LICENSE`.
