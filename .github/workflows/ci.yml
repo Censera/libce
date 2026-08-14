@@ -35,7 +35,7 @@ jobs:
       - name: Test
         run: make test
       - name: Sanitizers
-        run: make clean && make SANITIZE=address,undefined && make test
+        run: make clean test SANITIZE=address,undefined
       - name: Static analysis
         if: matrix.cc == 'clang' && runner.os == 'Linux'
         run: clang --analyze -std=c11 -Iinclude src/*.c
