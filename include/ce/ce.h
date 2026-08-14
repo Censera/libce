@@ -7,14 +7,21 @@
 #include <ce/buf.h>
 #include <ce/str.h>
 #include <ce/vec.h>
-#include <ce/file.h>
+#include <ce/map.h>
+#include <ce/set.h>
+#include <ce/queue.h>
 #include <ce/parse.h>
+#include <ce/format.h>
 #include <ce/hash.h>
 #include <ce/sort.h>
 #include <ce/path.h>
+#include <ce/file.h>
+#include <ce/stream.h>
+#include <ce/dir.h>
 #include <ce/env.h>
 #include <ce/time.h>
+#include <ce/random.h>
 #include <ce/cli.h>
-#include <ce/map.h>
+#include <ce/log.h>
 
 #endif
