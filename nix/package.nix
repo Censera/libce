@@ -8,6 +8,7 @@ pkgs.stdenv.mkDerivation {
 
   nativeBuildInputs = [
     pkgs.gnumake
+    pkgs.clang-tools
   ];
 
   strictDeps = true;
