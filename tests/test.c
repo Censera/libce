@@ -129,9 +129,10 @@ static void test_map_set(void)
     ce_set_free(&set);
 }
 
-static void test_queue(void)
+static void test_queue_deque(void)
 {
     CeQueue queue;
+    CeDeque deque;
     int value;
 
     assert(ce_queue_init(&queue, sizeof(int)) == CE_OK);
@@ -143,6 +144,19 @@ static void test_queue(void)
     assert(value == 2);
     assert(ce_queue_pop(&queue, &value) == CE_INVALID_DATA);
     ce_queue_free(&queue);
+
+    assert(ce_deque_init(&deque, sizeof(int)) == CE_OK);
+    assert(ce_deque_push_back(&deque, &(int){2}) == CE_OK);
+    assert(ce_deque_push_front(&deque, &(int){1}) == CE_OK);
+    assert(ce_deque_push_back(&deque, &(int){3}) == CE_OK);
+    assert(ce_deque_pop_front(&deque, &value) == CE_OK);
+    assert(value == 1);
+    assert(ce_deque_pop_back(&deque, &value) == CE_OK);
+    assert(value == 3);
+    assert(ce_deque_pop_front(&deque, &value) == CE_OK);
+    assert(value == 2);
+    assert(ce_deque_pop_front(&deque, &value) == CE_INVALID_DATA);
+    ce_deque_free(&deque);
 }
 
 static void test_parse_format_utf8(void)
@@ -311,7 +325,7 @@ int main(void)
     test_string();
     test_vector();
     test_map_set();
-    test_queue();
+    test_queue_deque();
     test_parse_format_utf8();
     test_hash_sort();
     test_path();
