@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <string.h>
 
 #include <ce/map.h>
@@ -86,12 +87,14 @@ static CeResult ce_map_rehash(CeMap *map, size_t capacity)
 
     ce_mem_free(old_entries);
     ce_mem_free(old_states);
+    (void)old_len;
     return CE_OK;
 }
 
 static CeResult ce_map_find(const CeMap *map, const void *key, size_t *slot, int *found)
 {
     size_t index;
+    size_t tombstone = SIZE_MAX;
 
     if (map->cap == 0)
         return CE_NOT_FOUND;
@@ -101,18 +104,27 @@ static CeResult ce_map_find(const CeMap *map, const void *key, size_t *slot, int
         unsigned char state = map->states[index];
 
         if (state == 0) {
-            *slot = index;
+            *slot = tombstone == SIZE_MAX ? index : tombstone;
             *found = 0;
             return CE_OK;
         }
 
-        if (state == 1 && map->equal(key, ce_map_entry(map, index))) {
+        if (state == 2) {
+            if (tombstone == SIZE_MAX)
+                tombstone = index;
+        } else if (map->equal(key, ce_map_entry(map, index))) {
             *slot = index;
             *found = 1;
             return CE_OK;
         }
 
         index = (index + 1) % map->cap;
+    }
+
+    if (tombstone != SIZE_MAX) {
+        *slot = tombstone;
+        *found = 0;
+        return CE_OK;
     }
 
     return CE_OVERFLOW;
@@ -164,6 +176,9 @@ CeResult ce_map_reserve(CeMap *map, size_t capacity)
 
 CeResult ce_map_put(CeMap *map, const void *key, const void *value)
 {
+    size_t next_len;
+    size_t load;
+    size_t limit;
     size_t slot;
     int found;
     CeResult result;
@@ -176,12 +191,23 @@ CeResult ce_map_put(CeMap *map, const void *key, const void *value)
         result = ce_map_allocate(map, 8);
         if (result != CE_OK)
             return result;
-    } else if ((map->len + 1) * 10 >= map->cap * 7) {
-        if (map->cap > SIZE_MAX / 2)
-            return CE_OVERFLOW;
-        result = ce_map_rehash(map, map->cap * 2);
+    } else {
+        result = ce_size_add(map->len, 1, &next_len);
         if (result != CE_OK)
             return result;
+        result = ce_size_mul(next_len, 10, &load);
+        if (result != CE_OK)
+            return result;
+        result = ce_size_mul(map->cap, 7, &limit);
+        if (result != CE_OK)
+            return result;
+        if (load >= limit) {
+            if (map->cap > SIZE_MAX / 2)
+                return CE_OVERFLOW;
+            result = ce_map_rehash(map, map->cap * 2);
+            if (result != CE_OK)
+                return result;
+        }
     }
 
     result = ce_map_find(map, key, &slot, &found);
