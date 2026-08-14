@@ -1,6 +1,6 @@
-# Ce 0.9.0 Architecture
+# Ce 1.0.0 Architecture
 
-Ce 0.9.0 defines Ce as an extended C environment: C remains the language and machine model, while Ce supplies a coherent set of missing facilities without hiding ownership, allocation, control flow, or failure.
+Ce is an extended C environment. C remains the language and machine model. Ce supplies coherent facilities around that model without hiding ownership, allocation, control flow, or failure.
 
 ## Rules
 
@@ -12,54 +12,75 @@ Every public facility follows the same model:
 - Borrowed data has a distinct view type and does not own storage.
 - Fallible operations return `CeResult`.
 - Length and capacity are separate values.
-- Pointer and length are passed together for byte ranges.
+- Pointer and length travel together for byte ranges.
 - Allocation is visible in the contract and has a deterministic cleanup path.
-- Platform-specific code stays behind platform-specific implementation boundaries.
-- No global mutable library state is required.
-- No framework, hidden runtime, exception system, or implicit initialization is part of Ce.
+- Platform-specific code stays behind localized platform boundaries.
+- Global mutable library state is not required.
+- There is no hidden runtime, exception system, framework machinery, or automatic initialization.
+- Higher-level facilities reuse lower-level ownership and error conventions instead of inventing competing models.
 
-## Foundation
-
-The foundation is deliberately small:
-
-- `core.h`: shared result type and result names.
-- `mem.h`: checked size arithmetic and allocation primitives.
-- `view.h`: borrowed byte ranges.
-- `buf.h`: owned growable byte storage.
-- `str.h`: owned growable NUL-terminated text.
-- `vec.h`: owned growable storage for fixed-size elements.
-- `file.h`: owned file contents and binary file operations.
-
-Higher-level facilities must depend on these lower-level concepts instead of inventing competing ownership and error conventions.
-
-## Module progression
-
-The 0.9.0 architecture is organized into layers rather than a feature checklist:
+## Layers
 
 ```text
-foundation
-    core mem view buf str vec file
+core
+    result, checked arithmetic, allocation, borrowed views
 
 containers
-    maps sets queues and other structures only when a real use exists
+    buffer, string, vector, map, set, queue
 
 text
-    views formatting parsing encoding
+    parsing, formatting, hashing, sorting
 
 io
-    streams buffered I/O directories paths
+    files, streams, directories, paths
 
 system
-    environment time process terminal platform
+    environment, time, deterministic random state
 
-utilities
-    hashing randomness sorting searching CLI diagnostics logging
+application
+    command-line handling, logging
 ```
 
-A module enters Ce only when its representation, ownership model, failure behavior, and interface are understood well enough to satisfy the same engineering rules as the foundation.
+The layers describe dependency direction, not class hierarchy. A module may depend on lower layers but never needs a framework object or global context to reach them.
+
+## Ownership
+
+`CeView` is borrowed. `CeBuf`, `CeStr`, `CeVec`, `CeMap`, `CeSet`, `CeQueue`, and `CeFile` own their internal storage. Their `*_free` operation releases that storage and leaves the object empty.
+
+Pointers returned from an owning object are borrowed and remain valid only until an operation that can reallocate or free that object's storage. APIs document aliasing restrictions when an operation may invalidate a borrowed pointer.
+
+## Failure
+
+Fallible operations return `CeResult`. They do not print, terminate the process, mutate global error state, or encode failure in ordinary data values.
+
+`CE_OK` represents success. Other result values distinguish invalid input, allocation failure, arithmetic overflow, I/O failure, missing objects, existing objects, and invalid data.
+
+## Containers
+
+Containers store bytes and fixed-size elements. They do not own arbitrary element graphs and therefore do not require hidden destructors, callbacks, or type registries.
+
+`CeMap` and `CeSet` use caller-provided hash and equality functions because arbitrary key types require a runtime comparison rule. The storage remains contiguous and the dispatch surface is limited to those operations.
+
+## System boundary
+
+Filesystem, environment, time, and directory operations isolate platform differences in implementation files. The public API remains expressed in C types and Ce contracts.
+
+The library does not promise to abstract every operating-system facility. A platform feature enters the public API only when its ownership, failure, and portability contract can be stated clearly.
 
 ## Product boundary
 
-The umbrella header, `ce/ce.h`, exposes the normal Ce toolbox. Individual headers remain independently includable so consumers do not need the entire library for one facility.
+`ce/ce.h` exposes the complete 1.0.0 toolbox. Individual headers remain independently includable.
 
-The product must retain the same vocabulary as the source: APIs, documentation, installation layout, diagnostics, and examples must describe the same concepts using the same names.
+The installation layout is:
+
+```text
+include/ce/*.h
+lib/libce.a
+lib/pkgconfig/libce.pc
+```
+
+Nix packaging is first-class through `flake.nix` and `nix/package.nix`.
+
+## Engineering gate
+
+A module is not complete merely because it compiles. Its representation, ownership model, failure behavior, tests, documentation, formatting, sanitizer behavior, and static-analysis behavior must satisfy the same engineering rules as the rest of Ce.
