@@ -114,6 +114,8 @@ static void test_map_set(void)
     assert(*(const int *)value == 99);
     assert(ce_map_get(&map, &other, &value) == CE_NOT_FOUND);
     assert(ce_map_remove(&map, &key) == CE_OK);
+    assert(ce_map_put(&map, &other, &mapped) == CE_OK);
+    assert(ce_map_get(&map, &other, &value) == CE_OK);
     ce_map_free(&map);
 
     assert(ce_set_init(&set, sizeof(int), hash_int, equal_int) == CE_OK);
