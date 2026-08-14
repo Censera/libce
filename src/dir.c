@@ -1,3 +1,5 @@
+#include <errno.h>
+#include <stdint.h>
 #include <string.h>
 
 #include <ce/dir.h>
@@ -107,6 +109,7 @@ CeResult ce_dir_next(CeDir *dir, CeStr *name, int *done)
 #else
     for (;;) {
         struct dirent *entry = readdir(state->dir);
+
         if (entry == NULL) {
             if (errno != 0)
                 return CE_IO_ERROR;
