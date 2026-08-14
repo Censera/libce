@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        cc: [cc, clang]
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      CC: ${{ matrix.cc }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: make clean all
+      - name: Test
+        run: make test
+      - name: Sanitizers
+        run: make clean && make SANITIZE=address,undefined && make test
