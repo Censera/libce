@@ -2,7 +2,7 @@
 
 Ce is a small, dependency-free C utility library built around explicit ownership, predictable failure, simple data structures, and boring interfaces.
 
-The name comes from **C** and **Censera**.
+The name comes from **C** and **Censera** :p
 
 ## Status
 
