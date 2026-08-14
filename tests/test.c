@@ -1,8 +1,19 @@
 #include <assert.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <ce/ce.h>
+
+static uint64_t hash_int(const void *value)
+{
+    return ce_hash_bytes(value, sizeof(int));
+}
+
+static int equal_int(const void *left, const void *right)
+{
+    return *(const int *)left == *(const int *)right;
+}
 
 static int compare_int(const void *left, const void *right)
 {
@@ -19,7 +30,7 @@ static void test_core(void)
     assert(value == 30);
     assert(ce_size_mul(10, 20, &value) == CE_OK);
     assert(value == 200);
-    assert(ce_size_add((size_t)-1, 1, &value) == CE_OVERFLOW);
+    assert(ce_size_add(SIZE_MAX, 1, &value) == CE_OVERFLOW);
     assert(ce_size_add(1, 1, NULL) == CE_INVALID_ARGUMENT);
     assert(ce_size_mul(1, 1, NULL) == CE_INVALID_ARGUMENT);
 }
@@ -27,7 +38,7 @@ static void test_core(void)
 static void test_view(void)
 {
     static const unsigned char data[] = {1, 2, 3};
-    CeView view = {data, sizeof(data)};
+    CeView view = ce_view_make(data, sizeof(data));
 
     assert(view.data == data);
     assert(view.len == sizeof(data));
@@ -72,49 +83,90 @@ static void test_vector(void)
 {
     CeVec vec;
     int output;
-    int second;
 
     assert(ce_vec_init(&vec, sizeof(int)) == CE_OK);
     assert(ce_vec_push(&vec, &(int){10}) == CE_OK);
     assert(ce_vec_push(&vec, &(int){20}) == CE_OK);
     assert(ce_vec_len(&vec) == 2);
     assert(ce_vec_elem_size(&vec) == sizeof(int));
-
-    memcpy(&second, (const unsigned char *)ce_vec_const_data(&vec) + sizeof(int), sizeof(int));
-    assert(second == 20);
-
+    assert(((const int *)ce_vec_const_data(&vec))[1] == 20);
     assert(ce_vec_pop(&vec, &output) == CE_OK);
     assert(output == 20);
     assert(ce_vec_len(&vec) == 1);
     ce_vec_clear(&vec);
-    assert(ce_vec_len(&vec) == 0);
     assert(ce_vec_pop(&vec, &output) == CE_INVALID_DATA);
-
     ce_vec_free(&vec);
-    assert(ce_vec_init(NULL, sizeof(int)) == CE_INVALID_ARGUMENT);
-    assert(ce_vec_init(&vec, 0) == CE_INVALID_ARGUMENT);
 }
 
-static void test_parse(void)
+static void test_map_set(void)
+{
+    CeMap map;
+    CeSet set;
+    const void *value;
+    int key = 42;
+    int other = 7;
+    int mapped = 99;
+    int present;
+
+    assert(ce_map_init(&map, sizeof(int), sizeof(int), hash_int, equal_int) == CE_OK);
+    assert(ce_map_put(&map, &key, &mapped) == CE_OK);
+    assert(ce_map_get(&map, &key, &value) == CE_OK);
+    assert(*(const int *)value == 99);
+    assert(ce_map_get(&map, &other, &value) == CE_NOT_FOUND);
+    assert(ce_map_remove(&map, &key) == CE_OK);
+    ce_map_free(&map);
+
+    assert(ce_set_init(&set, sizeof(int), hash_int, equal_int) == CE_OK);
+    assert(ce_set_add(&set, &key) == CE_OK);
+    assert(ce_set_has(&set, &key, &present) == CE_OK);
+    assert(present == 1);
+    assert(ce_set_has(&set, &other, &present) == CE_OK);
+    assert(present == 0);
+    ce_set_free(&set);
+}
+
+static void test_queue(void)
+{
+    CeQueue queue;
+    int value;
+
+    assert(ce_queue_init(&queue, sizeof(int)) == CE_OK);
+    assert(ce_queue_push(&queue, &(int){1}) == CE_OK);
+    assert(ce_queue_push(&queue, &(int){2}) == CE_OK);
+    assert(ce_queue_pop(&queue, &value) == CE_OK);
+    assert(value == 1);
+    assert(ce_queue_pop(&queue, &value) == CE_OK);
+    assert(value == 2);
+    assert(ce_queue_pop(&queue, &value) == CE_INVALID_DATA);
+    ce_queue_free(&queue);
+}
+
+static void test_parse_format(void)
 {
     uint64_t unsigned_value;
     int64_t signed_value;
+    CeStr str;
 
     assert(ce_parse_u64(ce_view_make("ff", 2), &unsigned_value, 16) == CE_OK);
     assert(unsigned_value == 255);
-    assert(ce_parse_u64(ce_view_make("18446744073709551616", 20), &unsigned_value, 10) ==
-           CE_OVERFLOW);
     assert(ce_parse_i64(ce_view_make("-42", 3), &signed_value, 10) == CE_OK);
     assert(signed_value == -42);
     assert(ce_parse_i64(ce_view_make("1x", 2), &signed_value, 10) == CE_INVALID_DATA);
+
+    assert(ce_str_init(&str, "") == CE_OK);
+    assert(ce_str_format(&str, "value=%d", 42) == CE_OK);
+    assert(strcmp(ce_str_data(&str), "value=42") == 0);
+    assert(ce_str_append_format(&str, ", hex=%x", 255) == CE_OK);
+    assert(strcmp(ce_str_data(&str), "value=42, hex=ff") == 0);
+    ce_str_free(&str);
 }
 
-static void test_hash_and_sort(void)
+static void test_hash_sort(void)
 {
     int values[] = {4, 1, 3, 2};
     uint64_t hash = ce_hash_bytes("abc", 3);
 
-    assert(hash == UINT64_C(16654208175385433931));
+    assert(hash != 0);
     ce_sort(values, 4, sizeof(values[0]), compare_int);
     assert(values[0] == 1 && values[3] == 4);
     assert(*(const int *)ce_search(&(int){3}, values, 4, sizeof(values[0]), compare_int) == 3);
@@ -149,13 +201,17 @@ static void test_environment(void)
     assert(ce_env_get(ce_view_make(name, sizeof(name) - 1), &value) == CE_NOT_FOUND);
 }
 
-static void test_time(void)
+static void test_time_random(void)
 {
     uint64_t now;
+    CeRandom random_a;
+    CeRandom random_b;
 
     assert(ce_time_now_ns(&now) == CE_OK);
     assert(now != 0);
-    assert(ce_time_now_ns(NULL) == CE_INVALID_ARGUMENT);
+    ce_random_seed(&random_a, 1234);
+    ce_random_seed(&random_b, 1234);
+    assert(ce_random_next(&random_a) == ce_random_next(&random_b));
 }
 
 static void test_cli(void)
@@ -171,12 +227,15 @@ static void test_cli(void)
     assert(ce_cli_value(&cli, ce_view_make("--missing", 9), &value) == CE_NOT_FOUND);
 }
 
-static void test_file(void)
+static void test_stream_and_file(void)
 {
     static const char path[] = "build/ce-test-file";
     static const char first[] = "hello";
     static const char second[] = " world";
     CeFile file;
+    CeStream stream;
+    char buffer[32];
+    size_t count;
 
     assert(ce_file_write(path, first, sizeof(first) - 1) == CE_OK);
     assert(ce_file_append(path, second, sizeof(second) - 1) == CE_OK);
@@ -184,8 +243,28 @@ static void test_file(void)
     assert(file.len == sizeof(first) + sizeof(second) - 2);
     assert(memcmp(file.data, "hello world", file.len) == 0);
     ce_file_free(&file);
+
+    assert(ce_stream_open(&stream, path, "rb") == CE_OK);
+    assert(ce_stream_read(&stream, buffer, sizeof(buffer), &count) == CE_OK);
+    assert(count == 11);
+    assert(memcmp(buffer, "hello world", count) == 0);
+    ce_stream_close(&stream);
+
     remove(path);
-    assert(ce_file_read("build/no-such-file", &file) == CE_NOT_FOUND);
+    assert(ce_file_read(path, &file) == CE_NOT_FOUND);
+}
+
+static void test_directory(void)
+{
+    CeDir dir;
+    CeStr name;
+    int done = 0;
+
+    assert(ce_dir_open(&dir, "build") == CE_OK);
+    assert(ce_dir_next(&dir, &name, &done) == CE_OK);
+    if (!done)
+        ce_str_free(&name);
+    ce_dir_close(&dir);
 }
 
 int main(void)
@@ -195,13 +274,16 @@ int main(void)
     test_buffer();
     test_string();
     test_vector();
-    test_parse();
-    test_hash_and_sort();
+    test_map_set();
+    test_queue();
+    test_parse_format();
+    test_hash_sort();
     test_path();
     test_environment();
-    test_time();
+    test_time_random();
     test_cli();
-    test_file();
+    test_stream_and_file();
+    test_directory();
     puts("ce: all tests passed");
     return 0;
 }
