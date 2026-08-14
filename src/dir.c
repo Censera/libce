@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include <errno.h>
 #include <stdint.h>
 #include <string.h>
@@ -60,16 +62,19 @@ CeResult ce_dir_open(CeDir *dir, const char *path)
         state->find = FindFirstFileA(pattern, &state->data);
         ce_mem_free(pattern);
         if (state->find == INVALID_HANDLE_VALUE) {
+            DWORD error = GetLastError();
             ce_mem_free(state);
-            return CE_NOT_FOUND;
+            return error == ERROR_PATH_NOT_FOUND || error == ERROR_FILE_NOT_FOUND ? CE_NOT_FOUND
+                                                                                     : CE_IO_ERROR;
         }
         state->first = 1;
     }
 #else
     state->dir = opendir(path);
     if (state->dir == NULL) {
+        int error = errno;
         ce_mem_free(state);
-        return CE_NOT_FOUND;
+        return error == ENOENT ? CE_NOT_FOUND : CE_IO_ERROR;
     }
 #endif
 
@@ -107,6 +112,7 @@ CeResult ce_dir_next(CeDir *dir, CeStr *name, int *done)
         return ce_str_init(name, entry);
     }
 #else
+    errno = 0;
     for (;;) {
         struct dirent *entry = readdir(state->dir);
 
