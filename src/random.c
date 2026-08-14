@@ -1,3 +1,5 @@
+#include <stddef.h>
+
 #include <ce/random.h>
 
 void ce_random_seed(CeRandom *random, uint64_t seed)
