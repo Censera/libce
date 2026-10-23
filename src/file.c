@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <ce/file.h>
-#include <ce/mem.h>
+#include <libce/file.h>
+#include <libce/mem.h>
 
 static CeResult ce_file_read_stream(FILE *file, CeFile *out)
 {

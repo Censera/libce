@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include <ce/mem.h>
+#include <libce/mem.h>
 
 CeResult ce_size_add(size_t left, size_t right, size_t *out)
 {

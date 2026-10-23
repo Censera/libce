@@ -1,9 +1,1 @@
 build/
-libce.a
-*.o
-*.a
-*.so
-*.dylib
-*.dll
-*.exe
-compile_commands.json

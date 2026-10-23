@@ -1,4 +1,4 @@
-#include <ce/core.h>
+#include <libce/core.h>
 
 const char *ce_result_name(CeResult result)
 {

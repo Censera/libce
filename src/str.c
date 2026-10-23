@@ -1,8 +1,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <ce/mem.h>
-#include <ce/str.h>
+#include <libce/mem.h>
+#include <libce/str.h>
 
 static CeResult ce_str_grow(CeStr *str, size_t needed)
 {

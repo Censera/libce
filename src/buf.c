@@ -1,8 +1,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <ce/buf.h>
-#include <ce/mem.h>
+#include <libce/buf.h>
+#include <libce/mem.h>
 
 static CeResult ce_buf_grow(CeBuf *buf, size_t needed)
 {

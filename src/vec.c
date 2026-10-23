@@ -1,8 +1,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <ce/mem.h>
-#include <ce/vec.h>
+#include <libce/mem.h>
+#include <libce/vec.h>
 
 static CeResult ce_vec_grow(CeVec *vec, size_t needed)
 {
